@@ -1,0 +1,131 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Инвестировать в проект</title>
+    <link th:href="@{/css/styles.css}" rel="stylesheet" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <style>
+        .invest-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .project-header {
+            margin-bottom: 2rem;
+        }
+
+        .invest-form {
+            margin-top: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button[type="submit"] {
+            background: var(--secondary);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        button[type="submit"]:hover {
+            background: #2aa876;
+        }
+        .project-closed {
+    margin-top: 2rem;
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.project-closed h3 {
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.project-closed p {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <a href="/authIndex" class="logo">BlockFund</a>
+    <div class="nav-links">
+        <a href="/authIndex#projects">Проекты</a>
+        <a href="/create">Создать проект</a>
+        <a href="/login">Профиль</a>
+    </div>
+</nav>
+
+<div class="invest-container">
+    <div class="project-header">
+        <h1 th:text="${project.projName}">Название проекта</h1>
+        <p th:text="${project.description}">Описание проекта</p>
+        <div class="progress-bar">
+            <div class="progress" th:style="'width:' + ${(project.collected_amount / project.target_amount) * 100} + '%'"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <span>Собрано: <span th:text="${project.collected_amount} + ' / ' + ${project.target_amount}">0 / 1000</span></span>
+            <span th:text="'Осталось ' + ${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), T(java.time.LocalDate).ofInstant(project.dateEnd.toInstant(), T(java.time.ZoneId).systemDefault()))} + ' дней'">Осталось 15 дней</span>
+        </div>
+    </div>
+
+    <!-- Блок для закрытых проектов -->
+    <div th:if="${isProjectClosed}" class="project-closed">
+        <div style="text-align: center; padding: 2rem; background: #f8f9fa; border-radius: 8px;">
+            <h3 style="color: #2A5C82;">Проект завершен</h3>
+            <p th:if="${project.getCollected_amount() >= project.getTarget_amount()}">
+                Проект успешно собрал необходимую сумму!
+            </p>
+            <p th:unless="${project.getCollected_amount() >= project.getTarget_amount()}">
+                Срок сбора средств по проекту истек
+            </p>
+            <a href="/authIndex" style="display: inline-block; margin-top: 1rem; color: #32B88A;">
+                Вернуться к списку проектов
+            </a>
+        </div>
+    </div>
+
+    <!-- Блок для активных проектов -->
+    <div th:unless="${isProjectClosed}" class="invest-form">
+        <form th:action="@{/project/{id}/invest(id=${project.id})}" method="post">
+            <div class="form-group">
+                <label for="amount">Сумма инвестиции:</label>
+                <input type="number" id="amount" name="amount"
+                       min="1"
+                       th:attr="max=${project.target_amount - project.collected_amount}"
+                       required>
+            </div>
+            <button type="submit">Инвестировать</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
